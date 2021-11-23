@@ -14,6 +14,7 @@
 
 // custom module
 #include "win.h"
+#include "geo/geo.h"
 
 //---------------------------------------
 // initialize a window parameters struct
@@ -128,7 +129,7 @@ int init_win_shaders(win_parameters* p) {
 //------------------------------------------------------------------------------
 int init_win_geometry(win_parameters* p) {
   // Screen Quad //-------------------------
-  rect proj = square2norm(p->s->box, p->w, p->h);
+  aaq proj = square2norm(p->s->box, p->w, p->h);
   GLfloat verts[4][4] = {
     { proj.pos.x, proj.pos.y, 0.0, 0.0 }, // TL
     { proj.dim.x, proj.pos.y, 1.0, 0.0 }, // TR
@@ -174,7 +175,7 @@ int init_win_geometry(win_parameters* p) {
 //------------------------------------------------------------------------------
 int update_win_geometry(win_parameters* p) {
   // Screen Quad //-------------------------
-  rect proj = square2norm(p->s->box, p->w, p->h);
+  aaquad proj = square2norm(p->s->box, p->w, p->h);
   GLfloat verts[4][4] = {
     { proj.pos.x, proj.pos.y, 0.0, 0.0 }, // TL
     { proj.dim.x, proj.pos.y, 1.0, 0.0 }, // TR
@@ -362,11 +363,14 @@ v2 point2norm(v2 point, float win_w, float win_h) {
 //    (hin_h)eigth - float
 // O: rectangle    - rect
 //------------------------------------------------------------------------------
-// quad square2norm(quad r, float win_w, float win_h) {
-//   rect projected = {
-//     point2norm(r.pos, win_w, win_h),
-//     point2norm(vadd(r.pos, r.dim), win_w, win_h)
-//   };
-//   return projected;
-// }
+aaquad square2norm(aaquad r, float win_w, float win_h) {
+  aaquad projected = {
+    point2norm(r.pos, win_w, win_h),
+    point2norm(vadd(r.pos, r.dim), win_w, win_h)
+  };
+  return projected;
+}
 
+int main() {
+  return 0;
+}
