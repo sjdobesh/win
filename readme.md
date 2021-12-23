@@ -32,16 +32,17 @@ A win struct is the master container for all window data.
 struct win {
   SDL_Window*       window;
   SDL_GLContext     context;
-  shader_collection vert_shaders;
-  shader_collection frag_shaders;
-  shader_collection shader_programs;
+  shader_collection shader_programs, vert_shaders, frag_shaders;
+  shader            shader_program, vert_shader, frag_shader;
   int w, h;
 };
 ```
 ## window interface
 ```c
 win init_win(); // initialize a window structure
-int load_shader(win*, "file/path/frag", FRAG);
-int bind_shader("name" | "filepath");
+int load_vert(win*, "file/path/vert:");
+int load_frag(win*, "file/path/frag:");
+int compile_shader(win*, "name");
+int bind_shader(win*, "name");
 int render(win);
 ```
