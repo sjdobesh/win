@@ -14,81 +14,68 @@
 
 // custom module
 #include "win.h"
-#include "geo/geo.h"
+#include "texture.h"
 
-//---------------------------------------
-// initialize a window parameters struct
-//---------------------------------------
-win_parameters init_win_parameters(
-  char* vert_path, char* frag_path, char* tex_path, // paths
-  int w, int h                                      // window size
-) {
-  win_parameters wp = {
-    .vert_path = vert_path,
-    .frag_path = frag_path,
-    .w = w,
-    .h = h
-  };
-  return wp;
-}
+// INITIALIZATIONS //-----------------------------------------------------------
 
-//---------------------------------------------
 // initialize a window with a parameter struct
-//---------------------------------------------
-int init_win(win_parameters* p) {
-  p->window  = init_sdl(p);     // window
-  p->context = init_context(p); // context
-  init_win_shaders(p);          // shaders
-  init_win_geometry(p);         // geometry buffers
-  init_win_textures(p);         // textures
-  return 0;
+win init_win(int h, int w) {
+  win window = {.w = w, .h = h};
+  printf("initalizing sdl...\n");
+  init_sdl(&window);
+  printf("initalizing context...\n");
+  init_context(&window);
+
+  printf("loading shader...\n");
+  // TEMPORARY WAY TO LOAD DEFAULT SHADER
+  program p = load_new_program(
+    "default",
+    "../shaders/default.vert", // vert path
+    "../shaders/default.frag" // frag path
+  );
+
+  window.prog = &p;
+
+  printf("initalizing shader...\n");
+  init_win_shaders(&window);
+  return window;
 }
 
-//--------------------------
 // initialize an SDL window
-//--------------------------
-// I: width & height - int
-// O: sdl window ptr - SDL_Window*
-//------------------------------------------------------------------------------
-SDL_Window* init_sdl(win_parameters* p) {
+void init_sdl(win* w) {
   // init SDL video
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    fprintf(stderr, "ERROR: Failed to initialize SDL video.\n");
+    fprintf(stderr, "[ERROR] failed to initialize SDL video\n");
     exit(EXIT_FAILURE);
   }
   // create window
   SDL_Window* window = SDL_CreateWindow(
-    "Photon",
+    "gec",
     SDL_WINDOWPOS_CENTERED,
     SDL_WINDOWPOS_CENTERED,
-    p->w, p->h,
+    w->w, w->h,
     SDL_WINDOW_OPENGL
   );
   if (window == NULL) {
-    fprintf(stderr, "ERROR: Failed to create main window.\n");
+    fprintf(stderr, "[ERROR] failed to create main window.\n");
     SDL_Quit();
     exit(EXIT_FAILURE);
   }
-  return window;
+  w->window = window;
 }
 
-//---------------------------------------
 // initialize an OpenGL context (& GLEW)
-//---------------------------------------
-// I: sdl window ptr - SDL_Window*
-// O: sdl glcontext  - SDL_GLContext
-//------------------------------------------------------------------------------
-SDL_GLContext init_context(win_parameters* p) {
+void init_context(win* w) {
   // set gl attributes
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   // init rendering context
-  SDL_GLContext context = SDL_GL_CreateContext(p->window);
+  SDL_GLContext context = SDL_GL_CreateContext(w->window);
   if (context == NULL) {
-    fprintf(stderr, "ERROR: Context creation failed.\n");
-    SDL_DestroyWindow(p->window);
+    fprintf(stderr, "[ERROR] context creation failed\n");
+    SDL_DestroyWindow(w->window);
     SDL_Quit();
     exit(EXIT_FAILURE);
   }
@@ -97,28 +84,20 @@ SDL_GLContext init_context(win_parameters* p) {
   glewExperimental = GL_TRUE; // OpenGL 3.+
   GLenum err = glewInit();
   if (err != GLEW_OK) {
-    fprintf(stderr, "ERROR: GLEW Initialization failed.\n");
+    fprintf(stderr, "[ERROR] GLEW initialization failed\n");
     SDL_GL_DeleteContext(context);
-    SDL_DestroyWindow(p->window);
+    SDL_DestroyWindow(w->window);
     SDL_Quit();
     exit(EXIT_FAILURE);
   }
-  return context;
+  w->context = context;
 }
 
-//-------------------------------------
 // initialize an OpenGL shader program
-//-------------------------------------
-// I: parameters  - win_parameters*
-// O: exit code   - int
-//------------------------------------------------------------------------------
-int init_win_shaders(win_parameters* p) {
+void init_win_shaders(win* w) {
   // bind vao
-  glGenVertexArrays(1, &(p->vao));
-  glBindVertexArray(p->vao);
-  p->shader_prog = compile_shader(p->vert_path, p->frag_path);
-  glUseProgram(p->shader_prog);
-  return 0;
+  glGenVertexArrays(1, &(w->prog->vao));
+  glBindVertexArray(w->prog->vao);
 }
 
 //------------------------------------
@@ -127,34 +106,33 @@ int init_win_shaders(win_parameters* p) {
 // I: parameters  - win_parameters*
 // O: exit code   - int
 //------------------------------------------------------------------------------
-int init_win_geometry(win_parameters* p) {
+void init_win_geometry(win* w) {
   // Screen Quad //-------------------------
-  aaq proj = square2norm(p->s->box, p->w, p->h);
   GLfloat verts[4][4] = {
-    { proj.pos.x, proj.pos.y, 0.0, 0.0 }, // TL
-    { proj.dim.x, proj.pos.y, 1.0, 0.0 }, // TR
-    { proj.dim.x, proj.dim.y, 1.0, 1.0 }, // BR
-    { proj.pos.x, proj.dim.y, 0.0, 1.0 }, // BL
+    { 0.0, 0.0, 0.0, 0.0 }, // TL
+    { 1.0, 0.0, 1.0, 0.0 }, // TR
+    { 1.0, 1.0, 1.0, 1.0 }, // BR
+    { 0.0, 1.0, 0.0, 1.0 }, // BL
   };
-  // indicies for any simple quad
+  // quad indicies
   GLint indicies[] = {
     0, 1, 2, 0, 2, 3
   };
   // BIND BUFFERS //
   // vertex buffer
-  glGenBuffers(1, &(p->vbo));
-  glBindBuffer(GL_ARRAY_BUFFER, p->vbo);
+  glGenBuffers(1, &(w->prog->vbo));
+  glBindBuffer(GL_ARRAY_BUFFER, w->prog->vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
   // element buffer
-  glGenBuffers(1, &(p->ebo));
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p->ebo);
+  glGenBuffers(1, &(w->prog->ebo));
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, w->prog->ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
   // bind vertex position attribute
-  GLint pos_attr_loc = glGetAttribLocation(p->shader_prog, "in_Position");
+  GLint pos_attr_loc = glGetAttribLocation(w->prog->gl_ptr, "in_Position");
   glVertexAttribPointer(pos_attr_loc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
   glEnableVertexAttribArray(pos_attr_loc);
   // bind vertex texture coordinate attribute
-  GLint tex_attr_loc = glGetAttribLocation(p->shader_prog, "in_Texcoord");
+  GLint tex_attr_loc = glGetAttribLocation(w->prog->gl_ptr, "in_Texcoord");
   glVertexAttribPointer(
     tex_attr_loc,
     2,
@@ -164,163 +142,117 @@ int init_win_geometry(win_parameters* p) {
     (void*)(2 * sizeof(GLfloat))
   );
   glEnableVertexAttribArray(tex_attr_loc);
-  return 0;
 }
 
-//----------------------------
-// Reset OpenGL geometry data
-//----------------------------
-// I: parameters  - win_parameters*
-// O: exit code   - int
-//------------------------------------------------------------------------------
-int update_win_geometry(win_parameters* p) {
-  // Screen Quad //-------------------------
-  aaquad proj = square2norm(p->s->box, p->w, p->h);
-  GLfloat verts[4][4] = {
-    { proj.pos.x, proj.pos.y, 0.0, 0.0 }, // TL
-    { proj.dim.x, proj.pos.y, 1.0, 0.0 }, // TR
-    { proj.dim.x, proj.dim.y, 1.0, 1.0 }, // BR
-    { proj.pos.x, proj.dim.y, 0.0, 1.0 }, // BL
-  };
-  // vertex buffer
-  glGenBuffers(1, &(p->vbo));
-  glBindBuffer(GL_ARRAY_BUFFER, p->vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
-  // bind vertex position attribute
-  GLint pos_attr_loc = glGetAttribLocation(p->shader_prog, "in_Position");
-  glVertexAttribPointer(pos_attr_loc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
-  glEnableVertexAttribArray(pos_attr_loc);
-  return 0;
-}
-
-//----------------------------
-// initialize OpenGL textures
-//----------------------------
-// I: parameters  - win_parameters*
-// O: exit code   - int
-//------------------------------------------------------------------------------
-int init_win_textures(win_parameters* p) {
-  // load a texture with texture parameters (t)
-  // load_image(p->t);
-  // make a texture
-  glGenTextures(1, &(p->tex));
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, p->tex);
-  glTexImage2D(
-    GL_TEXTURE_2D,    // target
-    0,                // level
-    GL_RGBA,          // internal format
-    p->t->w, p->t->h, // width, height
-    0,                // border
-    GL_RGB,           // format
-    GL_UNSIGNED_BYTE, // type
-    NULL              // data
-  );
-  // bind it to the uniform
-  glUniform1i(glGetUniformLocation(p->shader_prog, "tex"), 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexSubImage2D(
-    GL_TEXTURE_2D,               // target
-    0, 0, 0,                     // level, x&y offset
-    p->t->w, p->t->h,            // width, height
-    GL_RGBA,                     // format
-    GL_UNSIGNED_INT_8_8_8_8_REV, // type
-    p->t->pixel_buf              // pixels
-  );
-  // blend
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  return 0;
-}
-
-//------------------------
-// update OpenGL textures
-//------------------------
-// I: parameters  - win_parameters*
-// O: exit code   - int
-//------------------------------------------------------------------------------
-int update_win_textures(win_parameters* p) {
-  // make a texture
-  glGenTextures(1, &(p->tex));
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, p->tex);
-  glTexImage2D(
-    GL_TEXTURE_2D,    // target
-    0,                // level
-    GL_RGBA,          // internal format
-    p->t->w, p->t->h, // width, height
-    0,                // border
-    GL_RGB,           // format
-    GL_UNSIGNED_BYTE, // type
-    NULL              // data
-  );
-  // bind it to the uniform
-  glUniform1i(glGetUniformLocation(p->shader_prog, "tex"), 0);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexSubImage2D(
-    GL_TEXTURE_2D,               // target
-    0, 0, 0,                     // level, x&y offset
-    p->t->w, p->t->h,            // width, height
-    GL_RGBA,                     // format
-    GL_UNSIGNED_INT_8_8_8_8_REV, // type
-    p->t->pixel_buf              // pixels
-  );
-  // blend
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  return 0;
-}
-
-//------------------
 // free OpenGL data
-//------------------
-// I: window parameters - win_parameters*
-// O: exit code         - int
-//------------------------------------------------------------------------------
-int win_clean(win_parameters* p) {
+void win_clean(win* w) {
   // clean out gl program data
   glUseProgram(0);
   glDisableVertexAttribArray(0);
-  glDetachShader(p->shader_prog, p->vert_shader);
-  glDetachShader(p->shader_prog, p->frag_shader);
-  glDeleteProgram(p->shader_prog);
-  glDeleteShader(p->vert_shader);
-  glDeleteShader(p->frag_shader);
-  glDeleteTextures(1, &(p->tex));
-  glDeleteBuffers(1, &(p->ebo));
-  glDeleteBuffers(1, &(p->vbo));
-  glDeleteVertexArrays(1, &(p->vao));
+  glDetachShader(w->prog->gl_ptr, w->prog->vert->gl_ptr);
+  glDetachShader(w->prog->gl_ptr, w->prog->frag->gl_ptr);
+  glDeleteProgram(w->prog->gl_ptr);
+  glDeleteShader(w->prog->vert->gl_ptr);
+  glDeleteShader(w->prog->frag->gl_ptr);
+  // glDeleteTextures(1, &(w->tex));
+  glDeleteBuffers(1, &(w->prog->ebo));
+  glDeleteBuffers(1, &(w->prog->vbo));
+  glDeleteVertexArrays(1, &(w->prog->vao));
   // sdl items
-  SDL_GL_DeleteContext(p->context);
-  SDL_DestroyWindow(p->window);
+  SDL_GL_DeleteContext(w->context);
+  SDL_DestroyWindow(w->window);
   SDL_Quit();
-  // free nested structs
-  free(p->t);
-  free(p->s->rb);
-  free(p->s);
-  free(p);
-  return 0;
 }
 
-//-----------------------------
 // Render openGL in SDL_Window
-//-----------------------------
-// I: window      - SDL_Window*
-// O: exit code   - int
-//------------------------------------------------------------------------------
-int win_render(win_parameters* p) {
+void win_render(win w) {
+  // set color
+  printf("color\n");
   glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
+  // draw elements
+  printf("draw\n");
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
-  SDL_GL_SwapWindow(p->window);
-  return 0;
+  // swap frame
+  printf("swap\n");
+  SDL_GL_SwapWindow(w.window);
 }
+
+void load_program(win* w, char* vert_path, char* frag_path) {
+  program p = load_new_program("default", vert_path, frag_path);
+  use_program(&p);
+  w->prog = &p;
+  init_win_shaders(w);
+  init_win_geometry(w);
+}
+
+
+
+// MAIN //----------------------------------------------------------------------
+void prompt() {
+  scanf("> ");
+}
+void welcome() {
+  printf("\n----------------------------\n");
+  printf("WIN -- opengl window manager\n");
+  printf("----------------------------\n");
+  printf("author: samantha dobesh -- 2022\n");
+  printf("press 'h' for help\n\n");
+}
+void test() {
+  printf("initializing window...\n");
+  win w = init_win(200, 200);
+  printf("window initialized.\n");
+
+  printf("loading shader...\n");
+  load_program(&w, "../shaders/default.vert", "../shaders/default.frag");
+  printf("shader loaded.\n");
+
+  printf("load texture...\n");
+  texture t = new_texture("../textures/texture.jpg", "default", 100, 100);
+  bind_texture(t, w.prog->gl_ptr);
+  printf("texture loaded.\n");
+
+  printf("rendering window\n");
+  win_render(w);
+  printf("window rendered\n");
+
+  char junk[10];
+  scanf("%s", junk);
+
+  /*
+  printf("cleaning window\n");
+  win_clean(&w);
+  printf("window cleaned\n");
+  */
+}
+int main() {
+  welcome();
+  prompt();
+  char user_choice[10];
+  scanf("%s", user_choice);
+  test();
+}
+//------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 // //-------------------------
@@ -340,21 +272,6 @@ int win_render(win_parameters* p) {
 //   return 0;
 // }
 
-//---------------------------------------------------------
-// convert from point from pixel to normalized coordinates
-//---------------------------------------------------------
-// I: point        - vec2
-//    (win_w)idth  - float
-//    (hin_h)eight - float
-// O: exit code    - int
-//------------------------------------------------------------------------------
-v2 point2norm(v2 point, float win_w, float win_h) {
-  v2 projected = {
-    ((point.x / win_w) * 2) - 1,
-    -1 * (((point.y / win_h) * 2) - 1)
-  };
-  return projected;
-}
 //------------------------------------------------------
 // project square into normalized coordinates
 //------------------------------------------------------
@@ -363,14 +280,109 @@ v2 point2norm(v2 point, float win_w, float win_h) {
 //    (hin_h)eigth - float
 // O: rectangle    - rect
 //------------------------------------------------------------------------------
-aaquad square2norm(aaquad r, float win_w, float win_h) {
-  aaquad projected = {
-    point2norm(r.pos, win_w, win_h),
-    point2norm(vadd(r.pos, r.dim), win_w, win_h)
-  };
-  return projected;
-}
 
-int main() {
-  return 0;
-}
+//----------------------------
+// Reset OpenGL geometry data
+//----------------------------
+// I: parameters  - win_parameters*
+// O: exit code   - int
+//------------------------------------------------------------------------------
+// int update_win_geometry(win* w) {
+//   // Screen Quad //-------------------------
+//   aaquad proj = square2norm(p->s->box, p->w, p->h);
+//   GLfloat verts[4][4] = {
+//     { proj.pos.x, proj.pos.y, 0.0, 0.0 }, // TL
+//     { proj.dim.x, proj.pos.y, 1.0, 0.0 }, // TR
+//     { proj.dim.x, proj.dim.y, 1.0, 1.0 }, // BR
+//     { proj.pos.x, proj.dim.y, 0.0, 1.0 }, // BL
+//   };
+//   // vertex buffer
+//   glGenBuffers(1, &(p->vbo));
+//   glBindBuffer(GL_ARRAY_BUFFER, p->vbo);
+//   glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+//   // bind vertex position attribute
+//   GLint pos_attr_loc = glGetAttribLocation(p->shader_prog, "in_Position");
+//   glVertexAttribPointer(pos_attr_loc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
+//   glEnableVertexAttribArray(pos_attr_loc);
+//   return 0;
+// }
+
+// initialize OpenGL textures
+// int init_win_textures(win* w) {
+//   // load a texture with texture parameters (t)
+//   // load_image(p->t);
+//   // make a texture
+//   glGenTextures(1, &(p->tex));
+//   glActiveTexture(GL_TEXTURE0);
+//   glBindTexture(GL_TEXTURE_2D, p->tex);
+//   glTexImage2D(
+//     GL_TEXTURE_2D,    // target
+//     0,                // level
+//     GL_RGBA,          // internal format
+//     p->t->w, p->t->h, // width, height
+//     0,                // border
+//     GL_RGB,           // format
+//     GL_UNSIGNED_BYTE, // type
+//     NULL              // data
+//   );
+//   // bind it to the uniform
+//   glUniform1i(glGetUniformLocation(p->shader_prog, "tex"), 0);
+//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_BORDER);
+//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_BORDER);
+//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//   glTexSubImage2D(
+//     GL_TEXTURE_2D,               // target
+//     0, 0, 0,                     // level, x&y offset
+//     p->t->w, p->t->h,            // width, height
+//     GL_RGBA,                     // format
+//     GL_UNSIGNED_INT_8_8_8_8_REV, // type
+//     p->t->pixel_buf              // pixels
+//   );
+//   // blend
+//   glEnable(GL_BLEND);
+//   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//   return 0;
+// }
+
+//------------------------
+// update OpenGL textures
+//------------------------
+// I: parameters  - win_parameters*
+// O: exit code   - int
+//------------------------------------------------------------------------------
+// int update_win_textures(win_parameters* p) {
+//   // make a texture
+//   glGenTextures(1, &(p->tex));
+//   glActiveTexture(GL_TEXTURE0);
+//   glBindTexture(GL_TEXTURE_2D, p->tex);
+//   glTexImage2D(
+//     GL_TEXTURE_2D,    // target
+//     0,                // level
+//     GL_RGBA,          // internal format
+//     p->t->w, p->t->h, // width, height
+//     0,                // border
+//     GL_RGB,           // format
+//     GL_UNSIGNED_BYTE, // type
+//     NULL              // data
+//   );
+//   // bind it to the uniform
+//   glUniform1i(glGetUniformLocation(p->shader_prog, "tex"), 0);
+//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_BORDER);
+//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_BORDER);
+//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//   glTexSubImage2D(
+//     GL_TEXTURE_2D,               // target
+//     0, 0, 0,                     // level, x&y offset
+//     p->t->w, p->t->h,            // width, height
+//     GL_RGBA,                     // format
+//     GL_UNSIGNED_INT_8_8_8_8_REV, // type
+//     p->t->pixel_buf              // pixels
+//   );
+//   // blend
+//   glEnable(GL_BLEND);
+//   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//   return 0;
+// }
+

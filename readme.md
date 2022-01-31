@@ -1,8 +1,8 @@
 # **win**
-window interface for sdl2 and opengl in c.
+a window interface for sdl2 and opengl in c
 
 ## dependencies
-SDL2 and OpenGL.
+SDL2 and OpenGL
 
 ## usage
 ```c
@@ -33,13 +33,13 @@ struct win {
   SDL_Window*       window;
   SDL_GLContext     context;
   shader_collection shader_programs, vert_shaders, frag_shaders;
-  shader            shader_program, vert_shader, frag_shader;
+  shader*           shader_program, vert_shader, frag_shader;
   int w, h;
 };
 ```
 ## window interface
 ```c
-win init_win(); // initialize a window structure
+win init_win(int w, int h); // initialize a window structure
 int load_vert(win*, "file/path/vert:");
 int load_frag(win*, "file/path/frag:");
 int compile_shader(win*, "name");
