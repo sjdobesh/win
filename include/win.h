@@ -19,31 +19,12 @@
 
 // STRUCTS //-------------------------------------------------------------------
 
-
-// window parameters for opengl and sdl
-// typedef struct win_parameters {
-//   SDL_Window*     window;
-//   SDL_GLContext   context;
-//   GLuint          vao, vbo, ebo, tex;
-//   GLuint          vert_shader, frag_shader;
-//   GLuint          shader_prog;
-//   char*           vert_path;
-//   char*           frag_path;
-//   int             w, h;
-// } win_parameters;
 typedef struct win {
   SDL_Window*       window;
   SDL_GLContext     context;
-  program*          prog;
+  program           prog;
   int w, h;
 } win;
-
-// // texture parameters to load in an image
-// typedef struct tex_parameters {
-//   char* path;      // path to this texture
-//   int w, h, c;     // width, height, channels
-//   char* pixel_buf; // buffer for pixel bytes
-// } tex_parameters;
 
 // PROTOTYPES //----------------------------------------------------------------
 

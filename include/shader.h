@@ -25,20 +25,21 @@ typedef struct shader {
 typedef struct program {
   GLuint gl_ptr;
   GLuint vao, ebo, vbo; // shader geometry data
-  shader* vert, * frag; // ptrs to the shaders this program is using
+  shader vert, frag;    // ptrs to the shaders this program is using
   char* name;           // user given name
   int bound;            // bool to check if in use
 } program;
 
-
-// PROTOTYPES
+// struct functions
+shader new_shader(char* name, unsigned int type);
+program new_program(char* name);
+void print_shader(shader s);
+void print_program(program p);
 
 // shader functions
+void use_program(program* p);
+void unuse_program(program* p);
 char* load_shader_code(char* path);
 void compile_shader(shader s, const char* source);
 GLuint link_program(GLuint program, GLuint vert, GLuint frag);
-shader new_shader(char* name, unsigned int type);
-program new_program(char* name);
 program load_new_program(char* name, char* vert_path, char* frag_path);
-void use_program(program* p);
-void unuse_program(program* p);

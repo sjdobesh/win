@@ -28,13 +28,11 @@ win init_win(int h, int w) {
 
   printf("loading shader...\n");
   // TEMPORARY WAY TO LOAD DEFAULT SHADER
-  program p = load_new_program(
+  window.prog = load_new_program(
     "default",
     "../shaders/default.vert", // vert path
     "../shaders/default.frag" // frag path
   );
-
-  window.prog = &p;
 
   printf("initalizing shader...\n");
   init_win_shaders(&window);
@@ -50,7 +48,7 @@ void init_sdl(win* w) {
   }
   // create window
   SDL_Window* window = SDL_CreateWindow(
-    "gec",
+    "win",
     SDL_WINDOWPOS_CENTERED,
     SDL_WINDOWPOS_CENTERED,
     w->w, w->h,
@@ -96,18 +94,13 @@ void init_context(win* w) {
 // initialize an OpenGL shader program
 void init_win_shaders(win* w) {
   // bind vao
-  glGenVertexArrays(1, &(w->prog->vao));
-  glBindVertexArray(w->prog->vao);
+  glGenVertexArrays(1, &(w->prog.vao));
+  glBindVertexArray(w->prog.vao);
 }
 
-//------------------------------------
 // initialize an OpenGL geometry data
-//------------------------------------
-// I: parameters  - win_parameters*
-// O: exit code   - int
-//------------------------------------------------------------------------------
 void init_win_geometry(win* w) {
-  // Screen Quad //-------------------------
+  // screen quad
   GLfloat verts[4][4] = {
     { 0.0, 0.0, 0.0, 0.0 }, // TL
     { 1.0, 0.0, 1.0, 0.0 }, // TR
@@ -120,19 +113,19 @@ void init_win_geometry(win* w) {
   };
   // BIND BUFFERS //
   // vertex buffer
-  glGenBuffers(1, &(w->prog->vbo));
-  glBindBuffer(GL_ARRAY_BUFFER, w->prog->vbo);
+  glGenBuffers(1, &(w->prog.vbo));
+  glBindBuffer(GL_ARRAY_BUFFER, w->prog.vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
   // element buffer
-  glGenBuffers(1, &(w->prog->ebo));
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, w->prog->ebo);
+  glGenBuffers(1, &(w->prog.ebo));
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, w->prog.ebo);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
   // bind vertex position attribute
-  GLint pos_attr_loc = glGetAttribLocation(w->prog->gl_ptr, "in_Position");
+  GLint pos_attr_loc = glGetAttribLocation(w->prog.gl_ptr, "in_Position");
   glVertexAttribPointer(pos_attr_loc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
   glEnableVertexAttribArray(pos_attr_loc);
   // bind vertex texture coordinate attribute
-  GLint tex_attr_loc = glGetAttribLocation(w->prog->gl_ptr, "in_Texcoord");
+  GLint tex_attr_loc = glGetAttribLocation(w->prog.gl_ptr, "in_Texcoord");
   glVertexAttribPointer(
     tex_attr_loc,
     2,
@@ -149,15 +142,15 @@ void win_clean(win* w) {
   // clean out gl program data
   glUseProgram(0);
   glDisableVertexAttribArray(0);
-  glDetachShader(w->prog->gl_ptr, w->prog->vert->gl_ptr);
-  glDetachShader(w->prog->gl_ptr, w->prog->frag->gl_ptr);
-  glDeleteProgram(w->prog->gl_ptr);
-  glDeleteShader(w->prog->vert->gl_ptr);
-  glDeleteShader(w->prog->frag->gl_ptr);
+  glDetachShader(w->prog.gl_ptr, w->prog.vert.gl_ptr);
+  glDetachShader(w->prog.gl_ptr, w->prog.frag.gl_ptr);
+  glDeleteProgram(w->prog.gl_ptr);
+  glDeleteShader(w->prog.vert.gl_ptr);
+  glDeleteShader(w->prog.frag.gl_ptr);
   // glDeleteTextures(1, &(w->tex));
-  glDeleteBuffers(1, &(w->prog->ebo));
-  glDeleteBuffers(1, &(w->prog->vbo));
-  glDeleteVertexArrays(1, &(w->prog->vao));
+  glDeleteBuffers(1, &(w->prog.ebo));
+  glDeleteBuffers(1, &(w->prog.vbo));
+  glDeleteVertexArrays(1, &(w->prog.vao));
   // sdl items
   SDL_GL_DeleteContext(w->context);
   SDL_DestroyWindow(w->window);
@@ -181,9 +174,16 @@ void win_render(win w) {
 void load_program(win* w, char* vert_path, char* frag_path) {
   program p = load_new_program("default", vert_path, frag_path);
   use_program(&p);
-  w->prog = &p;
+  w->prog = p;
   init_win_shaders(w);
   init_win_geometry(w);
+}
+
+void print_win(win w) {
+  printf("win [ \n");
+  printf("  w x h : %d x %d\n", w.w, w.h);
+  print_program(w.prog);
+  printf("]\n");
 }
 
 
@@ -192,6 +192,7 @@ void load_program(win* w, char* vert_path, char* frag_path) {
 void prompt() {
   scanf("> ");
 }
+
 void welcome() {
   printf("\n----------------------------\n");
   printf("WIN -- opengl window manager\n");
@@ -210,7 +211,7 @@ void test() {
 
   printf("load texture...\n");
   texture t = new_texture("../textures/texture.jpg", "default", 100, 100);
-  bind_texture(t, w.prog->gl_ptr);
+  bind_texture(t, w.prog.gl_ptr);
   printf("texture loaded.\n");
 
   printf("rendering window\n");
@@ -220,11 +221,9 @@ void test() {
   char junk[10];
   scanf("%s", junk);
 
-  /*
   printf("cleaning window\n");
   win_clean(&w);
   printf("window cleaned\n");
-  */
 }
 int main() {
   welcome();
