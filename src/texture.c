@@ -26,17 +26,16 @@
 // LOAD & BIND //---------------------------------------------------------------
 
 // load an image with stbi
-char* create_image(char* path, int w, int h, int c) {
-  return (char*)stbi_load(path, &w, &h, &c, STBI_rgb_alpha);
+char* create_image(char* path, int* w, int* h, int* c) {
+  // automatically extracts size and channels
+  return (char*)stbi_load(path, w, h, c, STBI_rgb_alpha);
 }
 
 // create a texture struct
-texture new_texture(char* path, char* name, int width, int height) {
+texture new_texture(char* path, char* name) {
   texture t;
   glGenTextures(1, &(t.gl_ptr));
-  t.pixel_buf = create_image(path, width, height, 3);
-  t.w         = width;
-  t.h         = height;
+  t.pixel_buf = create_image(path, &(t.w), &(t.h), &(t.c));
   t.name      = name;
   return t;
 }
