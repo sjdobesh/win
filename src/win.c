@@ -7,6 +7,9 @@
 // handle SDL window and opengl context //
 //============================================================================80
 
+#include <time.h>
+#include <math.h>
+
 // sdl & opengl
 #include <SDL.h>
 #include <GL/glew.h>
@@ -16,6 +19,7 @@
 // custom module
 #include "win.h"
 #include "texture.h"
+#include "msleep.h"
 
 // initializations //-----------------------------------------------------------
 
@@ -115,25 +119,24 @@ void screentonormalized(win* w, float* pos_x, float* pos_y, float* dim_x, float*
 
 // initialize an OpenGL geometry data
 void init_geometry(win* w) {
-  // take screen space coords
+  // get normalized coords
   float p1 = w->prog.pos_x;
   float p2 = w->prog.pos_y;
   float p3 = w->prog.pos_x + w->prog.dim_x;
   float p4 = w->prog.pos_y + w->prog.dim_y;
-
-  // TODO uhhhhhh
   screentonormalized(w, &p1, &p2, &p3, &p4);
 
   // convert to normalized screen quad
   GLfloat verts[4][4] = {
-    { p1, p2, 1.0, 0.0 }, // TL
-    { p3, p2, 0.0, 0.0 }, // TR
-    { p3, p4, 0.0, 1.0 }, // BR
-    { p1, p4, 1.0, 1.0 }, // BL
+    { p1, p2, 1.0, 0.0 },
+    { p3, p2, 0.0, 0.0 },
+    { p3, p4, 0.0, 1.0 },
+    { p1, p4, 1.0, 1.0 },
   };
   // quad indicies
   GLint indicies[] = {
-    0, 1, 2, 0, 2, 3
+    0, 1, 2,
+    0, 2, 3
   };
   // BIND BUFFERS //
   // vertex buffer
@@ -220,6 +223,25 @@ void print_win(win w) {
   printf("]\n");
 }
 
+void new_sprite(
+  win* w,
+  char* texture_path,
+  int pos_x, int pos_y,
+  int dim_x, int dim_y
+) {
+  // default sprite program
+  load_program(
+    w,
+    "../shaders/default.vert",
+    "../shaders/default.frag",
+    pos_x, pos_y, // pos
+    dim_x, dim_y  // dim
+  );
+  w->prog.tex = new_texture(texture_path, "default");
+  bind_texture(w->prog.tex, w->prog.gl_ptr);
+}
+
+
 
 
 // MAIN //----------------------------------------------------------------------
@@ -231,30 +253,22 @@ void welcome() {
   printf("author: samantha dobesh -- 2022\n\n");
 }
 void test() {
-  printf("initializing window\n");
   win w = init_win(800, 800);
-
-  printf("loading shader\n");
-  load_program(
-    &w,
-    "../shaders/default.vert",
-    "../shaders/default.frag",
-    0, 0,    // pos
-    800, 800 // dim
-  );
-
-  printf("loading texture\n");
-  texture t = new_texture("../textures/texture.jpg", "default");
-  bind_texture(t, w.prog.gl_ptr);
-
-  printf("rendering window\n");
-  win_render(w);
+  for (int i = 0; i < 100; i++) {
+    new_sprite(
+      &w,
+      "../textures/texture.jpg",
+      (w.w/2) + 50 * cos((float)i/10.0), (w.h/2) + 50 * sin((float)i/10.0),
+      200, 200
+    );
+    win_render(w);
+  }
 
   printf("enter anything to quit:");
   char junk[10];
   scanf("%s", junk);
 
-  printf("\ncleaning window\n");
+  printf("\nexiting...\n");
   win_clean(&w);
 }
 

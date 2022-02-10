@@ -12,6 +12,8 @@
 #include <SDL2/SDL_opengl.h>
 #include <GL/glu.h>
 
+#include "texture.h"
+
 enum shader_type {
   FRAG, VERT, GEO
 };
@@ -26,6 +28,7 @@ typedef struct program {
   GLuint gl_ptr;
   GLuint vao, ebo, vbo; // shader geometry data
   shader vert, frag;    // ptrs to the shaders this program is using
+  texture tex;          // texture ptr for shader uniforms
   int pos_x, pos_y;     // position of top left
   int dim_x, dim_y;     // width to render
   char* name;           // user given name
