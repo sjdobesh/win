@@ -1,12 +1,12 @@
 //================//
 //                //
-//    SHADER.H    //
+//    shader.h    //
 //                //
 //========================//
 // manage opengl textures //
 //============================================================================80
 
-// SDL & OpenGL
+// SDL & opengl
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include <SDL2/SDL_opengl.h>
@@ -26,6 +26,8 @@ typedef struct program {
   GLuint gl_ptr;
   GLuint vao, ebo, vbo; // shader geometry data
   shader vert, frag;    // ptrs to the shaders this program is using
+  int pos_x, pos_y;     // position of top left
+  int dim_x, dim_y;     // width to render
   char* name;           // user given name
   int bound;            // bool to check if in use
 } program;
@@ -42,4 +44,9 @@ void unuse_program(program* p);
 char* load_shader_code(char* path);
 void compile_shader(shader s, const char* source);
 GLuint link_program(GLuint program, GLuint vert, GLuint frag);
-program load_new_program(char* name, char* vert_path, char* frag_path);
+program load_new_program(
+  char* name,
+  char* vert_path, char* frag_path,
+  int pos_x, int pos_y,
+  int dim_x, int dim_y
+);

@@ -1,6 +1,6 @@
 //=================//
 //                 //
-//    TEXTURE.H    //
+//    texture.h    //
 //                 //
 //======================================//
 // texture managing component to handle //
@@ -10,7 +10,7 @@
 #ifndef _TEXTURE_H_
 #define _TEXTURE_H_
 
-// STRUCTS //-------------------------------------------------------------------
+// structs //-------------------------------------------------------------------
 
 // texture parameters to load in an image
 typedef struct texture {
@@ -21,7 +21,7 @@ typedef struct texture {
   char* path;         // path to image file
 } texture;
 
-// PROTOTYPES //----------------------------------------------------------------
+// prototypes //----------------------------------------------------------------
 char*   create_image (char* path, int* w, int* h, int* c);
 texture new_texture  (char* path, char* name);
 void    bind_texture (texture t, unsigned int shader);

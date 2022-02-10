@@ -1,6 +1,6 @@
 //================//
 //                //
-//    SHADER.C    //
+//    shader.c    //
 //                //
 //========================//
 // manage opengl textures //
@@ -142,7 +142,12 @@ GLuint link_program(GLuint program, GLuint vert, GLuint frag) {
 }
 
 // load a program from paths
-program load_new_program(char* name, char* vert_path, char* frag_path) {
+program load_new_program(
+  char* name,
+  char* vert_path, char* frag_path,
+  int pos_x, int pos_y,
+  int dim_x, int dim_y
+) {
   // make new shader structs
   shader v = new_shader("vert", VERT);
   shader f = new_shader("frag", FRAG);
@@ -158,5 +163,10 @@ program load_new_program(char* name, char* vert_path, char* frag_path) {
   // add reference to frag and vert and return
   p.vert = v;
   p.frag = f;
+  // set size
+  p.pos_x = pos_x;
+  p.pos_y = pos_y;
+  p.dim_x = dim_x;
+  p.dim_y = dim_y;
   return p;
 }

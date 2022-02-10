@@ -1,12 +1,13 @@
 //=============//
 //             //
-//    WIN.C    //
+//    win.c    //
 //             //
 //======================================//
-// Handle SDL window and openGL context //
+// author: samantha dobesh              //
+// handle SDL window and opengl context //
 //============================================================================80
 
-// SDL & OpenGL
+// sdl & opengl
 #include <SDL.h>
 #include <GL/glew.h>
 #include <SDL_opengl.h>
@@ -16,7 +17,7 @@
 #include "win.h"
 #include "texture.h"
 
-// INITIALIZATIONS //-----------------------------------------------------------
+// initializations //-----------------------------------------------------------
 
 // initialize a window with a parameter struct
 win init_win(int h, int w) {
@@ -26,16 +27,17 @@ win init_win(int h, int w) {
   printf("initalizing context...\n");
   init_context(&window);
 
-  printf("loading shader...\n");
   // TEMPORARY WAY TO LOAD DEFAULT SHADER
+  printf("loading shader...\n");
   window.prog = load_new_program(
     "default",
     "../shaders/default.vert", // vert path
-    "../shaders/default.frag" // frag path
+    "../shaders/default.frag", // frag path
+    0, 0, h, w
   );
 
   printf("initalizing shader...\n");
-  init_win_shaders(&window);
+  init_vao(&window);
   return window;
 }
 
@@ -92,20 +94,42 @@ void init_context(win* w) {
 }
 
 // initialize an OpenGL shader program
-void init_win_shaders(win* w) {
+void init_vao(win* w) {
   // bind vao
   glGenVertexArrays(1, &(w->prog.vao));
   glBindVertexArray(w->prog.vao);
 }
 
+//
+void screentonormalized(win* w, float* pos_x, float* pos_y, float* dim_x, float* dim_y) {
+  /// convert range from 0 to w to -1 to 1
+  // 2x/w - 1, -2x/h + 1
+  printf("win: %dx%d\n", w->w, w->h);
+  printf("pos : %.2f, %.2f dim : %.2f, %.2f\n", *pos_x, *pos_y, *dim_x, *dim_y);
+  *pos_x = (( 2.0 / (float)w->w) * *pos_x) - 1.0;
+  *pos_y = ((-2.0 / (float)w->h) * *pos_y) + 1.0;
+  *dim_x = (( 2.0 / (float)w->w) * *dim_x) - 1.0;
+  *dim_y = ((-2.0 / (float)w->h) * *dim_y) + 1.0;
+  printf("pos : %.2f, %.2f dim : %.2f, %.2f\n", *pos_x, *pos_y, *dim_x, *dim_y);
+}
+
 // initialize an OpenGL geometry data
-void init_win_geometry(win* w) {
-  // screen quad
+void init_geometry(win* w) {
+  // take screen space coords
+  float p1 = w->prog.pos_x;
+  float p2 = w->prog.pos_y;
+  float p3 = w->prog.pos_x + w->prog.dim_x;
+  float p4 = w->prog.pos_y + w->prog.dim_y;
+
+  // TODO uhhhhhh
+  screentonormalized(w, &p1, &p2, &p3, &p4);
+
+  // convert to normalized screen quad
   GLfloat verts[4][4] = {
-    { -1.0, -1.0, 0.0, 1.0 }, // TL
-    {  1.0, -1.0, 1.0, 1.0 }, // TR
-    {  1.0,  1.0, 1.0, 0.0 }, // BR
-    { -1.0,  1.0, 0.0, 0.0 }, // BL
+    { p1, p2, 1.0, 0.0 }, // TL
+    { p3, p2, 0.0, 0.0 }, // TR
+    { p3, p4, 0.0, 1.0 }, // BR
+    { p1, p4, 1.0, 1.0 }, // BL
   };
   // quad indicies
   GLint indicies[] = {
@@ -171,12 +195,22 @@ void win_render(win w) {
   SDL_GL_SwapWindow(w.window);
 }
 
-void load_program(win* w, char* vert_path, char* frag_path) {
-  program p = load_new_program("default", vert_path, frag_path);
+// load a program from paths and init vao and geometry
+void load_program(
+  win* w,
+  char* vert_path, char* frag_path,
+  int pos_x, int pos_y,
+  int dim_x, int dim_y
+) {
+  program p = load_new_program(
+    "default",
+    vert_path,
+    frag_path,
+    pos_x, pos_y, dim_x, dim_y);
   use_program(&p);
   w->prog = p;
-  init_win_shaders(w);
-  init_win_geometry(w);
+  init_vao(w);
+  init_geometry(w);
 }
 
 void print_win(win w) {
@@ -192,27 +226,29 @@ void print_win(win w) {
 
 void welcome() {
   printf("\n----------------------------\n");
-  printf("WIN -- opengl window manager\n");
+  printf("win -- opengl window manager\n");
   printf("----------------------------\n");
   printf("author: samantha dobesh -- 2022\n\n");
 }
 void test() {
-  printf("initializing window...\n");
+  printf("initializing window\n");
   win w = init_win(800, 800);
-  printf("window initialized.\n");
 
-  printf("loading shader...\n");
-  load_program(&w, "../shaders/default.vert", "../shaders/default.frag");
-  printf("shader loaded.\n");
+  printf("loading shader\n");
+  load_program(
+    &w,
+    "../shaders/default.vert",
+    "../shaders/default.frag",
+    0, 0,    // pos
+    800, 800 // dim
+  );
 
-  printf("load texture...\n");
+  printf("loading texture\n");
   texture t = new_texture("../textures/texture.jpg", "default");
   bind_texture(t, w.prog.gl_ptr);
-  printf("texture loaded.\n");
 
   printf("rendering window\n");
   win_render(w);
-  printf("window rendered\n");
 
   printf("enter anything to quit:");
   char junk[10];
@@ -220,7 +256,6 @@ void test() {
 
   printf("\ncleaning window\n");
   win_clean(&w);
-  printf("window cleaned\n");
 }
 
 int main() {

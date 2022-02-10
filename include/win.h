@@ -1,15 +1,15 @@
 //=============//
 //             //
-//    WIN.H    //
+//    win.h    //
 //             //
 //==========================================//
-// Header for SDL window and openGL context //
+// header for SDL window and opengl context //
 //============================================================================80
 
 #ifndef _WIN_H_
 #define _WIN_H_
 
-// SDL & OpenGL
+// SDL & opengl
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include <SDL2/SDL_opengl.h>
@@ -17,7 +17,7 @@
 
 #include "shader.h"
 
-// STRUCTS //-------------------------------------------------------------------
+// structs //-------------------------------------------------------------------
 
 typedef struct win {
   SDL_Window*       window;
@@ -26,7 +26,7 @@ typedef struct win {
   int w, h;
 } win;
 
-// PROTOTYPES //----------------------------------------------------------------
+// prototypes //----------------------------------------------------------------
 
 // external functions
 win init_win(int h, int w);
@@ -36,6 +36,6 @@ void run_shader(char* vert_path, char* frag_path);
 // internal functions
 void init_sdl(win* w);
 void init_context(win* w);
-void init_win_shaders(win* w);
+void init_vao(win* w);
 
 #endif

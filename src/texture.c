@@ -1,13 +1,13 @@
 //=================//
 //                 //
-//    TEXTURE.C    //
+//    texture.c    //
 //                 //
 //======================================//
 // texture managing component to handle //
 // loading and organizing gl textures.  //
 //============================================================================80
 
-// SDL & OpenGL
+// SDL & opengl
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include <SDL2/SDL_opengl.h>
@@ -23,7 +23,7 @@
 // custom
 #include "texture.h"
 
-// LOAD & BIND //---------------------------------------------------------------
+// load & bind //---------------------------------------------------------------
 
 // load an image with stbi
 char* create_image(char* path, int* w, int* h, int* c) {
