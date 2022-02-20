@@ -20,6 +20,7 @@
 #include "win.h"
 #include "texture.h"
 #include "msleep.h"
+#include "debug.h"
 
 // initializations //-----------------------------------------------------------
 
@@ -261,6 +262,7 @@ void test() {
       (w.w/2) + 50 * cos((float)i/10.0), (w.h/2) + 50 * sin((float)i/10.0),
       200, 200
     );
+    drawShape();
     win_render(w);
   }
 
