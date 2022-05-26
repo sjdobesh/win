@@ -3,7 +3,10 @@
 #include <GL/glut.h>
 
 
-void drawline(float from_x, float from_y, float to_x, float to_y) {
+void drawline(
+  float from_x, float from_y,
+  float to_x, float to_y
+) {
     // from coordinate position
     glVertex2f(from_x, from_y);
     // to coordinate position
@@ -36,7 +39,7 @@ void render_shape() {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho( 0.0, 4.0, 0.0, 4.0, -1, 1 );
+    glOrtho(0.0, 4.0, 0.0, 4.0, -1, 1);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -53,4 +56,3 @@ void render_shape() {
     drawShape();
     glPopMatrix();
 }
-

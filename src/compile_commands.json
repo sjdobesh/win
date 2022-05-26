@@ -1,6 +1,16 @@
 [
 {
   "directory": "/home/s/Documents/Projects/Graphics/win/build",
+  "command": "/usr/bin/cc  -I/home/s/Documents/Projects/Graphics/win/include -isystem /usr/local/include/SDL2 -g -pthread -o CMakeFiles/win.dir/src/debug.c.o -c /home/s/Documents/Projects/Graphics/win/src/debug.c",
+  "file": "/home/s/Documents/Projects/Graphics/win/src/debug.c"
+},
+{
+  "directory": "/home/s/Documents/Projects/Graphics/win/build",
+  "command": "/usr/bin/cc  -I/home/s/Documents/Projects/Graphics/win/include -isystem /usr/local/include/SDL2 -g -pthread -o CMakeFiles/win.dir/src/msleep.c.o -c /home/s/Documents/Projects/Graphics/win/src/msleep.c",
+  "file": "/home/s/Documents/Projects/Graphics/win/src/msleep.c"
+},
+{
+  "directory": "/home/s/Documents/Projects/Graphics/win/build",
   "command": "/usr/bin/cc  -I/home/s/Documents/Projects/Graphics/win/include -isystem /usr/local/include/SDL2 -g -pthread -o CMakeFiles/win.dir/src/shader.c.o -c /home/s/Documents/Projects/Graphics/win/src/shader.c",
   "file": "/home/s/Documents/Projects/Graphics/win/src/shader.c"
 },

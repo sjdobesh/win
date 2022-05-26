@@ -3,10 +3,11 @@
 //    win.c    //
 //             //
 //======================================//
-// author: samantha dobesh              //
+// samantha jane                        //
 // handle SDL window and opengl context //
 //============================================================================80
 
+// std
 #include <time.h>
 #include <math.h>
 
@@ -24,7 +25,8 @@
 
 // initializations //-----------------------------------------------------------
 
-// initialize a window with a parameter struct
+// initialize a window with sdl and opengl context.
+// for now load a default shader and init the vao
 win init_win(int h, int w) {
   win window = {.w = w, .h = h};
   printf("initalizing sdl...\n");
@@ -36,8 +38,8 @@ win init_win(int h, int w) {
   printf("loading shader...\n");
   window.prog = load_new_program(
     "default",
-    "../shaders/default.vert", // vert path
-    "../shaders/default.frag", // frag path
+    "../shaders/default.vert",
+    "../shaders/default.frag",
     0, 0, h, w
   );
 
@@ -62,7 +64,7 @@ void init_sdl(win* w) {
     SDL_WINDOW_OPENGL
   );
   if (window == NULL) {
-    fprintf(stderr, "[ERROR] failed to create main window.\n");
+    fprintf(stderr, "[ERROR] failed to create window in init_sdl.\n");
     SDL_Quit();
     exit(EXIT_FAILURE);
   }
@@ -79,7 +81,7 @@ void init_context(win* w) {
   // init rendering context
   SDL_GLContext context = SDL_GL_CreateContext(w->window);
   if (context == NULL) {
-    fprintf(stderr, "[ERROR] context creation failed\n");
+    fprintf(stderr, "[ERROR] context creation failed in init_context.\n");
     SDL_DestroyWindow(w->window);
     SDL_Quit();
     exit(EXIT_FAILURE);
@@ -89,7 +91,7 @@ void init_context(win* w) {
   glewExperimental = GL_TRUE; // OpenGL 3.+
   GLenum err = glewInit();
   if (err != GLEW_OK) {
-    fprintf(stderr, "[ERROR] GLEW initialization failed\n");
+    fprintf(stderr, "[ERROR] GLEW initialization failed in init_context.\n");
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(w->window);
     SDL_Quit();
@@ -98,24 +100,51 @@ void init_context(win* w) {
   w->context = context;
 }
 
-// initialize an OpenGL shader program
+void screentonormalized(float* pos_x, float* pos_y, float* dim_x, float* dim_y, int w, int h) {
+  /// convert range from 0 to w to -1 to 1
+  // 2x/w - 1, -2x/h + 1
+  printf("win: %dx%d\n", w, h);
+  printf("pos : %.2f, %.2f dim : %.2f, %.2f\n", *pos_x, *pos_y, *dim_x, *dim_y);
+  *pos_x = (( 2.0 / (float)w) * *pos_x) - 1.0;
+  *pos_y = ((-2.0 / (float)h) * *pos_y) + 1.0;
+  *dim_x = (( 2.0 / (float)w) * *dim_x) - 1.0;
+  *dim_y = ((-2.0 / (float)h) * *dim_y) + 1.0;
+  printf("pos : %.2f, %.2f dim : %.2f, %.2f\n", *pos_x, *pos_y, *dim_x, *dim_y);
+}
+
 void init_vao(win* w) {
   // bind vao
   glGenVertexArrays(1, &(w->prog.vao));
   glBindVertexArray(w->prog.vao);
 }
 
-//
-void screentonormalized(win* w, float* pos_x, float* pos_y, float* dim_x, float* dim_y) {
-  /// convert range from 0 to w to -1 to 1
-  // 2x/w - 1, -2x/h + 1
-  printf("win: %dx%d\n", w->w, w->h);
-  printf("pos : %.2f, %.2f dim : %.2f, %.2f\n", *pos_x, *pos_y, *dim_x, *dim_y);
-  *pos_x = (( 2.0 / (float)w->w) * *pos_x) - 1.0;
-  *pos_y = ((-2.0 / (float)w->h) * *pos_y) + 1.0;
-  *dim_x = (( 2.0 / (float)w->w) * *dim_x) - 1.0;
-  *dim_y = ((-2.0 / (float)w->h) * *dim_y) + 1.0;
-  printf("pos : %.2f, %.2f dim : %.2f, %.2f\n", *pos_x, *pos_y, *dim_x, *dim_y);
+void bind_vbo(win* w, const float* vertex_array, int length) {
+  // vertex buffer
+  glBindBuffer(GL_ARRAY_BUFFER, w->prog.vbo);
+  glBufferData(GL_ARRAY_BUFFER, length * sizeof(GLfloat), vertex_array, GL_STATIC_DRAW);
+}
+
+void bind_vertex_attributes(win* w) {
+  // vertex position
+  GLint pos_attr_loc = glGetAttribLocation(w->prog.gl_ptr, "in_Position");
+  glVertexAttribPointer(pos_attr_loc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
+  glEnableVertexAttribArray(pos_attr_loc);
+  // texture coordinate
+  GLint tex_attr_loc = glGetAttribLocation(w->prog.gl_ptr, "in_Texcoord");
+  glVertexAttribPointer(
+    tex_attr_loc,
+    2,
+    GL_FLOAT,
+    GL_FALSE,
+    4 * sizeof(GLfloat),
+    (void*)(2 * sizeof(GLfloat))
+  );
+  glEnableVertexAttribArray(tex_attr_loc);
+}
+
+void bind_ebo(win* w, const int* indicies, int length) {
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, w->prog.ebo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, length * sizeof(GLint), indicies, GL_STATIC_DRAW);
 }
 
 // initialize an OpenGL geometry data
@@ -125,7 +154,7 @@ void init_geometry(win* w) {
   float p2 = w->prog.pos_y;
   float p3 = w->prog.pos_x + w->prog.dim_x;
   float p4 = w->prog.pos_y + w->prog.dim_y;
-  screentonormalized(w, &p1, &p2, &p3, &p4);
+  screentonormalized(&p1, &p2, &p3, &p4, w->w, w->h);
 
   // convert to normalized screen quad
   GLfloat verts[4][4] = {
@@ -139,20 +168,18 @@ void init_geometry(win* w) {
     0, 1, 2,
     0, 2, 3
   };
-  // BIND BUFFERS //
-  // vertex buffer
+  // GENERATE & BIND BUFFERS //
   glGenBuffers(1, &(w->prog.vbo));
-  glBindBuffer(GL_ARRAY_BUFFER, w->prog.vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
-  // element buffer
   glGenBuffers(1, &(w->prog.ebo));
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, w->prog.ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
-  // bind vertex position attribute
+  bind_vbo(w, (const float*)verts, 4);
+  bind_ebo(w, (const int*)indicies, 6);
+
+  // bind attributes
+  // position
   GLint pos_attr_loc = glGetAttribLocation(w->prog.gl_ptr, "in_Position");
   glVertexAttribPointer(pos_attr_loc, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(GLfloat), (void*)0);
   glEnableVertexAttribArray(pos_attr_loc);
-  // bind vertex texture coordinate attribute
+  // texture coordinate
   GLint tex_attr_loc = glGetAttribLocation(w->prog.gl_ptr, "in_Texcoord");
   glVertexAttribPointer(
     tex_attr_loc,
@@ -185,18 +212,38 @@ void win_clean(win* w) {
   SDL_Quit();
 }
 
+void color_red() {
+  glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+}
+void color_green() {
+  glClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+}
+void color_blue() {
+  glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+
+}
+
 // Render openGL in SDL_Window
 void win_render(win w) {
   // set color
-  printf("color\n");
-  glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
+  color_red();
   // draw elements
   printf("draw\n");
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
   // swap frame
   printf("swap\n");
   SDL_GL_SwapWindow(w.window);
+}
+
+
+// draw a an arbitrary set of vertices to the screen
+void debug_draw(int* vertex_array, int length) {
+  glDrawArrays(GL_LINES, 0, length);
 }
 
 // load a program from paths and init vao and geometry
@@ -253,23 +300,34 @@ void welcome() {
   printf("----------------------------\n");
   printf("author: samantha dobesh -- 2022\n\n");
 }
-void test() {
+
+void pause() {
+  char s[1];
+  printf("enter anything to continue: ");
+  scanf("%s", s);
+}
+
+void texture_test() {
+  printf("running test...\n");
   win w = init_win(800, 800);
-  for (int i = 0; i < 100; i++) {
-    new_sprite(
-      &w,
-      "../textures/texture.jpg",
-      (w.w/2) + 50 * cos((float)i/10.0), (w.h/2) + 50 * sin((float)i/10.0),
-      200, 200
-    );
-    drawShape();
-    win_render(w);
-  }
+  new_sprite(
+    &w,
+    "../textures/texture.jpg",
+    w.w/2.0, w.h/2.0,
+    200, 200
+  );
+  win_render(w);
+  pause();
+  printf("\nexiting...\n");
+  win_clean(&w);
+}
 
-  printf("enter anything to quit:");
-  char junk[10];
-  scanf("%s", junk);
-
+void debug_test() {
+  printf("running test...\n");
+  win w = init_win(800, 800);
+  drawShape();
+  win_render(w);
+  pause();
   printf("\nexiting...\n");
   win_clean(&w);
 }
@@ -277,5 +335,5 @@ void test() {
 int main() {
   welcome();
   printf("running test...\n");
-  test();
+  texture_test();
 }
