@@ -10,27 +10,28 @@
 #define _WIN_H_
 
 // SDL & opengl
-#include <SDL2/SDL.h>
 #include <GL/glew.h>
-#include <SDL2/SDL_opengl.h>
 #include <GL/glu.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
 
 #include "shader.h"
 
 // structs //-------------------------------------------------------------------
 
-typedef struct win {
-  SDL_Window*   window;
+typedef struct Win {
+  SDL_Window *window;
   SDL_GLContext context;
-  program       prog;
+  Program program;
+  UniformBuf uniformbuf;
   int w, h;
-} win;
+} Win;
 
 // prototypes //----------------------------------------------------------------
 
-win init_win(int h, int w) ;
-void init_sdl(win* w) ;
-void init_context(win* w) ;
-void win_render(win w) ;
-void win_clean(win* w) ;
+Win init_win(int h, int w);
+void init_sdl(Win *w);
+void init_context(Win *w);
+void win_render(Win w);
+void win_clean(Win *w);
 #endif

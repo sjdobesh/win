@@ -2,54 +2,50 @@
 //                //
 //    shader.h    //
 //                //
-//========================//
-// manage opengl textures //
+//====================================================//
+// opengl shader data including program and uniforms. //
 //============================================================================80
 
 // SDL & opengl
-#include <SDL2/SDL.h>
 #include <GL/glew.h>
-#include <SDL2/SDL_opengl.h>
 #include <GL/glu.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
 
 #include "texture.h"
+#include "uniformbuf.h"
 
-enum shader_type {
-  FRAG, VERT, GEO
-};
+enum shader_type { FRAG, VERT, GEO };
 
-typedef struct shader {
-  GLuint gl_ptr;        // opengl reference
-  char* name;           // user given name
-  unsigned int type;    // shader type enum
-} shader;
+typedef struct Shader {
+  GLuint gl_ptr;     // opengl reference
+  char *name;        // user given name
+  unsigned int type; // shader type enum
+} Shader;
 
-typedef struct program {
+typedef struct Program {
   GLuint gl_ptr;
+  char *name;           // user given name
   GLuint vao, ebo, vbo; // shader geometry data
-  shader vert, frag;    // ptrs to the shaders this program is using
-  texture tex;          // texture ptr for shader uniforms
+  Shader vert, frag;    // ptrs to the shaders this program is using
+  Texture tex;          // texture ptr for shader uniforms
   int pos_x, pos_y;     // position of top left
   int dim_x, dim_y;     // width to render
-  char* name;           // user given name
-  int bound;            // bool to check if in use
-} program;
+  int bound;            // bool to check if this program is in use
+  UniformBuf ubuf;      // uniform data and update functions
+} Program;
 
 // struct functions
-shader new_shader(char* name, unsigned int type);
-program new_program(char* name);
-void print_shader(shader s);
-void print_program(program p);
+Shader new_shader(char *name, unsigned int type);
+Program new_program(char *name);
+void print_shader(Shader s);
+void print_program(Program p);
 
 // shader functions
-void use_program(program* p);
-void unuse_program(program* p);
-char* load_shader_code(char* path);
-void compile_shader(shader s, const char* source);
+void use_program(Program *p);
+void unuse_program(Program *p);
+char *load_shader_code(char *path);
+void compile_shader(Shader s, const char *source);
 GLuint link_program(GLuint program, GLuint vert, GLuint frag);
-program load_new_program(
-  char* name,
-  char* vert_path, char* frag_path,
-  int pos_x, int pos_y,
-  int dim_x, int dim_y
-);
+Program load_new_program(char *name, char *vert_path, char *frag_path,
+                         int pos_x, int pos_y, int dim_x, int dim_y);

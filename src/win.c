@@ -24,8 +24,8 @@
 // initializations & cleaning //-------------------------------------------------
 
 // initialize a window with sdl and opengl context
-win init_win(int h, int w) {
-  win window = {.w = w, .h = h};
+Win init_win(int h, int w) {
+  Win window = {.w = w, .h = h};
   printf("initalizing sdl...\n");
   init_sdl(&window);
   printf("initalizing context...\n");
@@ -33,16 +33,16 @@ win init_win(int h, int w) {
 
   // TEMPORARY WAY TO LOAD DEFAULT SHADER
   printf("loading shader...\n");
-  window.prog = load_new_program("default", "../shaders/default.vert",
+  window.program = load_new_program("default", "../shaders/default.vert",
                                  "../shaders/default.frag", 0, 0, h, w);
 
   printf("initalizing shader...\n");
-  bind_vao(&window);
+  // bind_vao(&window);
   return window;
 }
 
 // initialize an SDL window
-void init_sdl(win *w) {
+void init_sdl(Win *w) {
   // init SDL video
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
     fprintf(stderr, "[ERROR] failed to initialize SDL video\n");
@@ -61,7 +61,7 @@ void init_sdl(win *w) {
 }
 
 // initialize an OpenGL context (& GLEW)
-void init_context(win *w) {
+void init_context(Win *w) {
   // set gl attributes
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
@@ -90,7 +90,7 @@ void init_context(win *w) {
 }
 
 // render opengl in sdl_window
-void win_render(win w) {
+void win_render(Win w) {
   // draw elements
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
   // swap frame
@@ -98,19 +98,19 @@ void win_render(win w) {
 }
 
 // free OpenGL data
-void win_clean(win *w) {
+void win_clean(Win *w) {
   // clean out gl program data
   glUseProgram(0);
   glDisableVertexAttribArray(0);
-  glDetachShader(w->prog.gl_ptr, w->prog.vert.gl_ptr);
-  glDetachShader(w->prog.gl_ptr, w->prog.frag.gl_ptr);
-  glDeleteProgram(w->prog.gl_ptr);
-  glDeleteShader(w->prog.vert.gl_ptr);
-  glDeleteShader(w->prog.frag.gl_ptr);
+  glDetachShader(w->program.gl_ptr, w->program.vert.gl_ptr);
+  glDetachShader(w->program.gl_ptr, w->program.frag.gl_ptr);
+  glDeleteProgram(w->program.gl_ptr);
+  glDeleteShader(w->program.vert.gl_ptr);
+  glDeleteShader(w->program.frag.gl_ptr);
   // glDeleteTextures(1, &(w->tex));
-  glDeleteBuffers(1, &(w->prog.ebo));
-  glDeleteBuffers(1, &(w->prog.vbo));
-  glDeleteVertexArrays(1, &(w->prog.vao));
+  glDeleteBuffers(1, &(w->program.ebo));
+  glDeleteBuffers(1, &(w->program.vbo));
+  glDeleteVertexArrays(1, &(w->program.vao));
   // sdl items
   SDL_GL_DeleteContext(w->context);
   SDL_DestroyWindow(w->window);
