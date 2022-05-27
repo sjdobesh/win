@@ -168,7 +168,11 @@ float update_time(float x) {
 }
 
 void test() {
-  Uniform u = new_df_uniform("scalar", 0.0, &update_time);
+  Uniform u = new_df_uniform(
+      "float",
+      0.0,
+      &update_time
+  );
   u = update_uniform(u);
 }
 
