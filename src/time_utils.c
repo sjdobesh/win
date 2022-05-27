@@ -20,11 +20,13 @@ int msleep(long msec){
     } while (res && errno == EINTR);
     return res;
 }
-
 /* mseconds(): get microsecond timestamp */
 /* from : https://stackoverflow.com/questions/11765301/how-do-i-get-the-unix-timestamp-in-c-as-an-int */
+
 int64_t mseconds() {
+
     struct timespec tms;
+
     if (! timespec_get(&tms, TIME_UTC)) {
         return -1;
     }

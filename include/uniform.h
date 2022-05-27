@@ -10,6 +10,7 @@
 #define _UNIFORM_H_
 
 #include <stdio.h>
+#include "time_utils.h"
 
 // indicate type last placed into the unions
 enum uniform_type { INT, FLOAT, V2, V3, V4, SAMPLER2D };
@@ -35,6 +36,7 @@ typedef struct Uniform {
     vecUpdateFunc vecUpdate;
   };
 } Uniform;
+
 
 // constructors //--------------------------------------------------------------
 
@@ -138,8 +140,8 @@ Uniform new_dv4_uniform(char *name, float x, float y, float z, float w,
 }
 
 // update a uniform according to its own function.
-// if the unfirom is not updateable, an error is
-// printed to stderr and the uniform is returned unchanged
+// if the uniform is not dynamic, an error is printed
+// to stderr and the uniform is returned unchanged
 Uniform update_uniform(Uniform u) {
   // check for incorrect update
   if (!u.dynamic) {
@@ -161,12 +163,12 @@ Uniform update_uniform(Uniform u) {
   return u;
 }
 
-int foo(int x) {
-  return x+1;
+float update_time(float x) {
+  return mseconds();
 }
 
 void test() {
-  Uniform u = new_di_uniform("scalar", 1, &foo);
+  Uniform u = new_df_uniform("scalar", 0.0, &update_time);
   u = update_uniform(u);
 }
 
