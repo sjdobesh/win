@@ -44,7 +44,7 @@ win init_win(int h, int w) {
   );
 
   printf("initalizing shader...\n");
-  init_vao(&window);
+  bind_vao(&window);
   return window;
 }
 
@@ -112,8 +112,8 @@ void screentonormalized(float* pos_x, float* pos_y, float* dim_x, float* dim_y, 
   printf("pos : %.2f, %.2f dim : %.2f, %.2f\n", *pos_x, *pos_y, *dim_x, *dim_y);
 }
 
-void init_vao(win* w) {
-  // bind vao
+// generate and bind vertex array object (vao) to the program in the window struct
+void bind_vao(win* w) {
   glGenVertexArrays(1, &(w->prog.vao));
   glBindVertexArray(w->prog.vao);
 }
@@ -122,6 +122,12 @@ void bind_vbo(win* w, const float* vertex_array, int length) {
   // vertex buffer
   glBindBuffer(GL_ARRAY_BUFFER, w->prog.vbo);
   glBufferData(GL_ARRAY_BUFFER, length * sizeof(GLfloat), vertex_array, GL_STATIC_DRAW);
+}
+
+
+void bind_ebo(win* w, const int* indicies, int length) {
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, w->prog.ebo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, length * sizeof(GLint), indicies, GL_STATIC_DRAW);
 }
 
 void bind_vertex_attributes(win* w) {
@@ -140,11 +146,6 @@ void bind_vertex_attributes(win* w) {
     (void*)(2 * sizeof(GLfloat))
   );
   glEnableVertexAttribArray(tex_attr_loc);
-}
-
-void bind_ebo(win* w, const int* indicies, int length) {
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, w->prog.ebo);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, length * sizeof(GLint), indicies, GL_STATIC_DRAW);
 }
 
 // initialize an OpenGL geometry data
@@ -260,7 +261,7 @@ void load_program(
     pos_x, pos_y, dim_x, dim_y);
   use_program(&p);
   w->prog = p;
-  init_vao(w);
+  bind_vao(w);
   init_geometry(w);
 }
 
@@ -270,6 +271,7 @@ void print_win(win w) {
   print_program(w.prog);
   printf("]\n");
 }
+
 
 void new_sprite(
   win* w,
