@@ -10,6 +10,7 @@
 #define _UNIFORM_H_
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "time_utils.h"
 
 // indicate type last placed into the unions
@@ -36,7 +37,6 @@ typedef struct Uniform {
     vecUpdateFunc vecUpdate;
   };
 } Uniform;
-
 
 // constructors //--------------------------------------------------------------
 
@@ -142,25 +142,25 @@ Uniform new_dv4_uniform(char *name, float x, float y, float z, float w,
 // update a uniform according to its own function.
 // if the uniform is not dynamic, an error is printed
 // to stderr and the uniform is returned unchanged
-Uniform update_uniform(Uniform u) {
+void update_uniform(Uniform* u) {
   // check for incorrect update
-  if (!u.dynamic) {
+  if (!u->dynamic) {
     fprintf(stderr, "[ERROR] attempted to update a static uniform.\n");
-    return u;
+    return;
   }
   // update by type
-  switch (u.type) {
+  switch (u->type) {
   case INT:
-    u.ival = u.iUpdate(u.ival);
+    u->ival = u->iUpdate(u->ival);
     break;
   case FLOAT:
-    u.fval = u.fUpdate(u.fval);
+    u->fval = u->fUpdate(u->fval);
     break;
   default:
-    u.fpval = u.vecUpdate(u.fpval);
+    u->fpval = u->vecUpdate(u->fpval);
     break;
   }
-  return u;
+  return;
 }
 
 float update_time(float x) {
@@ -173,7 +173,50 @@ void test() {
       0.0,
       &update_time
   );
-  u = update_uniform(u);
+  update_uniform(&u);
+}
+
+void uniform_print(Uniform u) {
+  printf("Uniform %s\n", u.name);
+  printf("  - type: ");
+  switch(u.type) {
+  case INT:
+    printf("INT\n");
+    printf("  - val: %d", u.ival);
+    break;
+  case FLOAT:
+    printf("FLOAT\n");
+    printf("  - val: %.2f", u.fval);
+    break;
+  case V2:
+    printf("V2\n");
+    printf("  - val: ");
+    for (int i = 0; i < 2; i++) {
+      printf("%.2f ", u.fpval[i]);
+    }
+    printf("\n");
+    break;
+  case V3:
+    printf("V3\n");
+    printf("  - val: ");
+    for (int i = 0; i < 3; i++) {
+      printf("%.2f ", u.fpval[i]);
+    }
+    printf("\n");
+    break;
+  case V4:
+    printf("V4\n");
+    printf("  - val: ");
+    for (int i = 0; i < 4; i++) {
+      printf("%.2f ", u.fpval[i]);
+    }
+    printf("\n");
+    break;
+  }
+  printf("  - dynamic: %d\n", u.dynamic);
+  if (u.dynamic) {
+    printf("  - update_function: %pf", u.fUpdate);
+  }
 }
 
 #endif
