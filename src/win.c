@@ -7,23 +7,27 @@
 // handle SDL window and opengl context //
 //============================================================================80
 
+// TOC
+
+// 33 - init_win
+// 60 - render_win
+// 68 - clean_win
+// 88 - print_win
+// 96 - welcome
+
 // std
 #include <math.h>
 #include <time.h>
-
 // sdl & opengl
 #include <GL/glew.h>
 #include <GL/glu.h>
 #include <SDL.h>
 #include <SDL_opengl.h>
-
 // custom module
 #include "init.h"
 #include "texture.h"
 #include "win.h"
 #include "gl.h"
-
-// initializations & cleaning //-------------------------------------------------
 
 // initialize a window with sdl and opengl context
 win init_win(int h, int w) {
@@ -62,7 +66,7 @@ void render_win(win w) {
 
 // free OpenGL data
 void clean_win(win *w) {
-  // clean out gl program data
+  // gl program data
   glUseProgram(0);
   glDisableVertexAttribArray(0);
   glDetachShader(w->prog.gl_ptr, w->prog.vert.gl_ptr);
@@ -80,8 +84,7 @@ void clean_win(win *w) {
   SDL_Quit();
 }
 
-// printing //---------------------------------------------------------
-
+// debug print
 void print_win(win w) {
   printf("win [ \n");
   printf("  w x h : %d x %d\n", w.w, w.h);
@@ -90,11 +93,9 @@ void print_win(win w) {
 }
 
 // welcome
-//--------------------------------------------------------------------
-
 void welcome() {
-  printf("\n------------------------------------\n");
+  printf("\n----------------------------------------\n");
   printf("win -- an opengl powered window manager\n");
-  printf("------------------------------------\n");
+  printf("----------------------------------------\n");
   printf("author: samantha jane -- 2022\n\n");
 }
