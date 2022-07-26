@@ -29,8 +29,6 @@ typedef struct win {
 // prototypes //----------------------------------------------------------------
 
 win init_win(int h, int w) ;
-void init_sdl(win* w) ;
-void init_context(win* w) ;
-void win_render(win w) ;
-void win_clean(win* w) ;
+void render_win(win w) ;
+void clean_win(win* w) ;
 #endif

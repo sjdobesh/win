@@ -2,27 +2,31 @@
 //                //
 //    shader.c    //
 //                //
-//========================//
-// manage opengl textures //
+//=====================================//
+// manage opengl shaders and programs. //
 //============================================================================80
 
+// TOC
+
 // struct functions
-// 28  - shader new_shader(char* name, unsigned int type);
-// 49  - program new_program(char* name);
-// 55  - void print_shader(shader s);
-// 63  - void print_program(program p);
+// 32  - new_shader
+// 53  - new_program
+// 59  - print_shader
+// 67  - print_program
 
 // shader functions
-// 72  - void use_program(program p);
-// 78  - void unuse_program(program p);
-// 84  - char* load_shader_code(char* path);
-// 117 - void compile_shader(shader s, const char* source);
-// 136 - GLuint link_program(GLuint program, GLuint vert, GLuint frag);
-// 145 - program load_new_program(char* name, char* vert_path, char* frag_path);
+// 76  - use_program
+// 82  - unuse_program
+// 88  - load_shader_code
+// 121 - compile_shader
+// 140 - link_program
+// 149 - load_new_program
+// 179 - update_program
 
 #include <stdlib.h>
 #include <string.h>
 #include "shader.h"
+#include "uniform.h"
 
 // return a newly populated shader struct
 shader new_shader(char* name, unsigned int type) {
@@ -168,5 +172,11 @@ program load_new_program(
   p.pos_y = pos_y;
   p.dim_x = dim_x;
   p.dim_y = dim_y;
+  return p;
+}
+
+// update a program struct and return it
+program update_program(program p) {
+  p.uniforms = update_uniforms(p.uniforms);
   return p;
 }

@@ -1,7 +1,7 @@
-//=========================//
-//                         //
-//        uniform.h        //
-//                         //
+//=================//
+//                 //
+//    uniform.h    //
+//                 //
 //===================================//
 // handles uniform data and updates. //
 //============================================================================80
@@ -9,165 +9,54 @@
 #ifndef _UNIFORM_H_
 #define _UNIFORM_H_
 
-#include <stdio.h>
-
-// indicate type last placed into the unions
-enum uniform_type { INT, FLOAT, V2, V3, V4, SAMPLER2D };
+// indicate type in the union
+enum uniform_type { INT, FLOAT, V2, V3, V4 };
 
 // update function pointers
-typedef int (*intUpdateFunc)(int);
-typedef float (*floatUpdateFunc)(float);
-typedef float *(*vecUpdateFunc)(float *);
+typedef int (*int_update_func)(int);
+typedef float (*float_update_func)(float);
+typedef float *(*vec_update_func)(float *);
 
 // data structure for the setting and updating of uniform shader variables
-typedef struct Uniform {
+typedef struct uniform {
   char *name;
   union {
     int ival;
-    float fval;
-    float *fpval;
+    float fval; float *fpval;
   };
   unsigned int type;
   int dynamic;
   union {
-    intUpdateFunc iUpdate;
-    floatUpdateFunc fUpdate;
-    vecUpdateFunc vecUpdate;
+    int_update_func iUpdate;
+    float_update_func fUpdate;
+    vec_update_func vecUpdate;
   };
-} Uniform;
+} uniform;
 
-// constructors //--------------------------------------------------------------
+typedef struct uniform_collection {
+  uniform* item;
+  int count;
+} uniform_collection;
 
-// integers //
+// prototypes
 
-// create a new static integer uniform
-Uniform new_i_uniform(char *name, int val) {
-  Uniform u = {.name = name, .ival = val, .type = INT, .dynamic = 0};
-  return u;
-}
-
-// create a new dynamic integer uniform
-Uniform new_di_uniform(char *name, int val, int (*intUpdateFunc)(int)) {
-  Uniform u = {.name = name,
-               .ival = val,
-               .type = INT,
-               .dynamic = 1,
-               .iUpdate = intUpdateFunc};
-  return u;
-}
-
-// floats //
-
-// create a new static float uniform
-Uniform new_f_uniform(char *name, float val) {
-  Uniform u = {.name = name, .fval = val, .type = FLOAT, .dynamic = 0};
-  return u;
-}
-
-// create a new dynamic float uniform
-Uniform new_df_uniform(char *name, float val, float (*floatUpdateFunc)(float)) {
-  Uniform u = {.name = name,
-               .fval = val,
-               .type = FLOAT,
-               .dynamic = 1,
-               .fUpdate = floatUpdateFunc};
-  return u;
-}
-
-// vector 2 //
-
-// create a new static vector 2 uniform
-Uniform new_v2_uniform(char *name, float x, float y) {
-  float val[2] = {x, y};
-  Uniform u = {.name = name, .fpval = val, .type = V2, .dynamic = 0};
-  return u;
-}
-
-// create a new dynamic vector 2 uniform
-Uniform new_dv2_uniform(char *name, float x, float y,
-                        float *(*vecUpdateFunc)(float *)) {
-  float val[3] = {x, y};
-  Uniform u = {.name = name,
-               .fpval = val,
-               .type = V2,
-               .dynamic = 1,
-               .vecUpdate = vecUpdateFunc};
-  return u;
-}
-
-// vector 3 //
-
-// create a new static vector 3 uniform
-Uniform new_v3_uniform(char *name, float x, float y, float z) {
-  float val[3] = {x, y, z};
-  Uniform u = {.name = name, .fpval = val, .type = V3, .dynamic = 0};
-  return u;
-}
-
-// create a new dynamic vector 3 uniform
-Uniform new_dv3_uniform(char *name, float x, float y, float z,
-                        float *(*vecUpdateFunc)(float *)) {
-  float val[3] = {x, y, z};
-  Uniform u = {.name = name,
-               .fpval = val,
-               .type = V3,
-               .dynamic = 1,
-               .vecUpdate = vecUpdateFunc};
-  return u;
-}
-
-// vector 4 //
-
-// create a new static vector 4 uniform
-Uniform new_v4_uniform(char *name, float x, float y, float z, float w) {
-  float val[4] = {x, y, z, w};
-  Uniform u = {.name = name, .fpval = val, .type = V4, .dynamic = 0};
-  return u;
-}
-
-// create a new dynamic vector 4 uniform
-Uniform new_dv4_uniform(char *name, float x, float y, float z, float w,
-                        float *(*vecUpdateFunc)(float *)) {
-  float val[4] = {x, y, z, w};
-  Uniform u = {.name = name,
-               .fpval = val,
-               .type = V4,
-               .dynamic = 1,
-               .vecUpdate = vecUpdateFunc};
-  return u;
-}
-
-// update a uniform according to its own function.
-// if the unfirom is not updateable, an error is
-// printed to stderr and the uniform is returned unchanged
-Uniform update_uniform(Uniform u) {
-  // check for incorrect update
-  if (!u.dynamic) {
-    fprintf(stderr, "[ERROR] attempted to update a static uniform.\n");
-    return u;
-  }
-  // update by type
-  switch (u.type) {
-  case INT:
-    u.ival = u.iUpdate(u.ival);
-    break;
-  case FLOAT:
-    u.fval = u.fUpdate(u.fval);
-    break;
-  default:
-    u.fpval = u.vecUpdate(u.fpval);
-    break;
-  }
-  return u;
-}
-
-int foo(int x) {
-  return x+1;
-}
-
-void test() {
-  Uniform u = new_di_uniform("scalar", 1, &foo);
-  u = update_uniform(u);
-}
+uniform new_i_uniform(char *name, int val);
+uniform new_di_uniform(char *name, int val, int (*int_update_func)(int));
+uniform new_f_uniform(char *name, float val);
+uniform new_df_uniform(char *name, float val,
+                       float (*float_update_func)(float));
+uniform new_v2_uniform(char *name, float x, float y);
+uniform new_dv2_uniform(char *name, float x, float y,
+                        float *(*vecUpdateFunc)(float *));
+uniform new_v3_uniform(char *name, float x, float y, float z);
+uniform new_dv3_uniform(char *name, float x, float y, float z,
+                        float *(*vecUpdateFunc)(float *));
+uniform new_v4_uniform(char *name, float x, float y, float z, float w);
+uniform new_dv4_uniform(char *name, float x, float y, float z, float w,
+                        float *(*vecUpdateFunc)(float *));
+uniform update_uniform(uniform u);
+uniform_collection update_uniforms(uniform_collection uc);
+void add_uniform(uniform_collection *uc, uniform u);
+void free_uniforms(uniform_collection *uc);
 
 #endif

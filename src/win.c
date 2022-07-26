@@ -18,79 +18,42 @@
 #include <SDL_opengl.h>
 
 // custom module
+#include "init.h"
 #include "texture.h"
 #include "win.h"
+#include "gl.h"
 
 // initializations & cleaning //-------------------------------------------------
 
 // initialize a window with sdl and opengl context
 win init_win(int h, int w) {
-  win window = {.w = w, .h = h};
   printf("initalizing sdl...\n");
-  init_sdl(&window);
+  SDL_Window* sdl_window = init_sdl(w, h);
   printf("initalizing context...\n");
-  init_context(&window);
+  SDL_GLContext sdl_context = init_context(sdl_window);
+
+  win window = {
+    .window = sdl_window,
+    .context = sdl_context,
+    .w = w, .h = h
+  };
 
   // TEMPORARY WAY TO LOAD DEFAULT SHADER
   printf("loading shader...\n");
-  window.prog = load_new_program("default", "../shaders/default.vert",
-                                 "../shaders/default.frag", 0, 0, h, w);
+  window.prog = load_new_program(
+    "default",
+    "../shaders/default.vert",
+    "../shaders/default.frag",
+    0, 0, h, w
+  );
 
   printf("initalizing shader...\n");
-  bind_vao(&window);
+  bind_vao(window.prog.vao);
   return window;
 }
 
-// initialize an SDL window
-void init_sdl(win *w) {
-  // init SDL video
-  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-    fprintf(stderr, "[ERROR] failed to initialize SDL video\n");
-    exit(EXIT_FAILURE);
-  }
-  // create window
-  SDL_Window *window =
-      SDL_CreateWindow("win", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                       w->w, w->h, SDL_WINDOW_OPENGL);
-  if (window == NULL) {
-    fprintf(stderr, "[ERROR] failed to create window in init_sdl.\n");
-    SDL_Quit();
-    exit(EXIT_FAILURE);
-  }
-  w->window = window;
-}
-
-// initialize an OpenGL context (& GLEW)
-void init_context(win *w) {
-  // set gl attributes
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-  // init rendering context
-  SDL_GLContext context = SDL_GL_CreateContext(w->window);
-  if (context == NULL) {
-    fprintf(stderr, "[ERROR] context creation failed in init_context.\n");
-    SDL_DestroyWindow(w->window);
-    SDL_Quit();
-    exit(EXIT_FAILURE);
-  }
-  SDL_GL_SetSwapInterval(1); // vsync
-  // GLEW
-  glewExperimental = GL_TRUE; // OpenGL 3.+
-  GLenum err = glewInit();
-  if (err != GLEW_OK) {
-    fprintf(stderr, "[ERROR] GLEW initialization failed in init_context.\n");
-    SDL_GL_DeleteContext(context);
-    SDL_DestroyWindow(w->window);
-    SDL_Quit();
-    exit(EXIT_FAILURE);
-  }
-  w->context = context;
-}
-
 // render opengl in sdl_window
-void win_render(win w) {
+void render_win(win w) {
   // draw elements
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, NULL);
   // swap frame
@@ -98,7 +61,7 @@ void win_render(win w) {
 }
 
 // free OpenGL data
-void win_clean(win *w) {
+void clean_win(win *w) {
   // clean out gl program data
   glUseProgram(0);
   glDisableVertexAttribArray(0);
@@ -115,4 +78,23 @@ void win_clean(win *w) {
   SDL_GL_DeleteContext(w->context);
   SDL_DestroyWindow(w->window);
   SDL_Quit();
+}
+
+// printing //---------------------------------------------------------
+
+void print_win(win w) {
+  printf("win [ \n");
+  printf("  w x h : %d x %d\n", w.w, w.h);
+  print_program(w.prog);
+  printf("]\n");
+}
+
+// welcome
+//--------------------------------------------------------------------
+
+void welcome() {
+  printf("\n------------------------------------\n");
+  printf("win -- an opengl powered window manager\n");
+  printf("------------------------------------\n");
+  printf("author: samantha jane -- 2022\n\n");
 }
