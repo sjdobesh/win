@@ -2,7 +2,7 @@
 #include <errno.h>
 
 /* msleep(): sleep for the requested number of milliseconds. */
-/* from : https://stackoverflow.com/questions/1157209/is-there-an-alternative-sleep-function-in-c-to-milliseconds*/
+/* src : https://stackoverflow.com/questions/1157209/is-there-an-alternative-sleep-function-in-c-to-milliseconds*/
 int msleep(long msec){
     struct timespec ts;
     int res;

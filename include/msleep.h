@@ -1,7 +1,7 @@
 #ifndef _MSLEEP_H_
 #define _MSLEEP_H_
 
-// yep, thats it!
+/* millisecond sleep function */
 int msleep(long msec);
 
 #endif

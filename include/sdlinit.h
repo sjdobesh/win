@@ -1,0 +1,22 @@
+/*=================*
+ *                 *
+ *    sdlinit.c    *
+ *                 *
+ *======================*
+ * samantha jane        *
+ * SDL & OpenGL *glue*. *
+ *==========================================================================80*/
+
+#ifndef _INIT_H_
+#define _INIT_H_
+
+#include <SDL2/SDL.h>
+#include <GL/glew.h>
+#include <SDL2/SDL_opengl.h>
+#include <GL/glu.h>
+
+/* initialize an SDL window and return it */
+SDL_Window* init_sdl(int w, int h);
+SDL_GLContext init_context(SDL_Window* w);
+
+#endif
