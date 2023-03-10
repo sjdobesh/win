@@ -6,13 +6,10 @@
  * manage opengl shaders and programs. *
  *==========================================================================80*/
 
-<<<<<<< HEAD
-=======
 #ifndef _SHADER_H_
 #define _SHADER_H_
 
 // SDL & opengl
->>>>>>> tmp
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 #include <SDL2/SDL_opengl.h>
@@ -30,8 +27,12 @@ typedef struct shader {
 } shader;
 
 // struct functions
-shader new_shader(char* name, unsigned int type);
-void print_shader(shader s);
+shader new_shader(char* name, shader_type type);
+void shader_print(shader s);
+void shader_tab_print(shader s, unsigned tabs);
+
+/* print out a shader struct */
+void shader_tab_print(shader s, unsigned tab_level);
 
 // shader functions
 char* load_shader_code(char* path);
