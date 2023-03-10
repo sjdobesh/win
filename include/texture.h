@@ -14,11 +14,10 @@
 
 // texture parameters to load in an image
 typedef struct texture {
-  unsigned int gl_ptr;// gl reference to texture
-  int w, h, c;        // width, height, channels
-  char* pixel_buf;    // buffer for pixel bytes
-  char* name;         // user given name
-  char* path;         // path to image file
+  unsigned int gl_ptr;             // gl reference to texture
+  int w, h, c;                     // width, height, channels
+  char* pixel_buf;                 // buffer for pixel bytes
+  union {char* path; char* name;}; // path to image file
 } texture;
 
 // prototypes //----------------------------------------------------------------

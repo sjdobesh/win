@@ -28,7 +28,14 @@ shader new_shader(char* name, unsigned int type) {
   return s;
 }
 
-/* loads shader code from a file given a path */
+// print out program struct
+void print_shader(shader s) {
+  printf("shader [\n");
+  printf("  gl ptr : %d\n", s.gl_ptr);
+  printf("]\n");
+}
+
+// loads shader code from a file given a path
 char* load_shader_code(char* path) {
   FILE *f;
   long size;

@@ -1,27 +1,38 @@
-/*=================*
- *                 *
- *    program.h    *
- *                 *
- *=====================================*
- * samantha jane                       *
- * manage opengl shaders and programs. *
- *==========================================================================80*/
+//=================//
+//                 //
+//    program.h    //
+//                 //
+//========================//
+// manage opengl textures //
+//============================================================================80
 
-#include <SDL2/SDL.h>
-#include <GL/glew.h>
-#include <SDL2/SDL_opengl.h>
-#include <GL/glu.h>
 #include "shader.h"
+#include "texture.h"
 
-/* compiled shader program */
+#ifndef _PROGRAM_H_
+#define _PROGRAM_H_
+
 typedef struct program {
-  GLuint gl_ptr;         /* points to compiled program */
-  GLuint vao, ebo, vbo;  /* shader geometry data */
-  shader vert, frag;     /* ptrs to the shaders this program is using */
-  unsigned pos_x, pos_y; /* position of top left */
-  unsigned dim_x, dim_y; /* width to render */
-  uniform uniforms[10];  /* max of 10 uniforms per program */
+  GLuint gl_ptr;
+  GLuint vao, ebo, vbo;    // shader geometry data
+  shader vert, frag;       // ptrs to the shaders this program is using
+  texture tex;             // texture ptr for shader uniforms
+  union { int x, pos_x; }; // position of top left
+  union { int y, pos_y; };
+  union { int w, width, dim_x; };
+  union { int h, height, dim_y; };
+  unsigned bound : 1;               // bool to check if in use
 } program;
 
+program new_program(char* name);
+void print_program(program p);
+void use_program(program* p);
+void unuse_program(program* p);
 GLuint link_program(GLuint program, GLuint vert, GLuint frag);
-program update_program(program p);
+program load_new_program(
+  char* name,
+  char* vert_path, char* frag_path,
+  int pos_x, int pos_y,
+  int dim_x, int dim_y
+);
+#endif

@@ -16,14 +16,14 @@
 #include <SDL2/SDL_opengl.h>
 #include <GL/glu.h>
 
-#include "win.h"
+#include "program.h"
 
 typedef struct win {
   SDL_Window*   window;
   SDL_GLContext context;
   program       prog;
-  union { unsigned w, width, c, cols; } 
-  union { unsigned h, height, r, rows; }
+  union { unsigned w, width, c, cols; };
+  union { unsigned h, height, r, rows; };
 } win;
 
 win init_win(int h, int w) ;

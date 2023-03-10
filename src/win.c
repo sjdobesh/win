@@ -18,6 +18,82 @@
 #include "win.h"
 #include "gl.h"
 
+// custom module
+#include "win.h"
+#include "msleep.h"
+
+// initializations //-----------------------------------------------------------
+
+// initialize a window with a parameter struct
+win init_win(int h, int w) {
+  win window = {.w = w, .h = h};
+  printf("initalizing sdl...\n");
+  init_sdl(&window);
+  printf("initalizing context...\n");
+  init_context(&window);
+
+  return window;
+}
+
+// initialize an SDL window
+void init_sdl(win* w) {
+  // init SDL video
+  if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    fprintf(stderr, "[ERROR] failed to initialize SDL video\n");
+    exit(EXIT_FAILURE);
+  }
+  // create window
+  SDL_Window* window = SDL_CreateWindow(
+    "win",
+    SDL_WINDOWPOS_CENTERED,
+    SDL_WINDOWPOS_CENTERED,
+    w->w, w->h,
+    SDL_WINDOW_OPENGL
+  );
+  if (window == NULL) {
+    fprintf(stderr, "[ERROR] failed to create main window.\n");
+    SDL_Quit();
+    exit(EXIT_FAILURE);
+  }
+  w->window = window;
+}
+
+// initialize an OpenGL context (& GLEW)
+void init_context(win* w) {
+  // set gl attributes
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  // init rendering context
+  SDL_GLContext context = SDL_GL_CreateContext(w->window);
+  if (context == NULL) {
+    fprintf(stderr, "[ERROR] context creation failed\n");
+    SDL_DestroyWindow(w->window);
+    SDL_Quit();
+    exit(EXIT_FAILURE);
+  }
+  SDL_GL_SetSwapInterval(1); // vsync
+  // GLEW
+  glewExperimental = GL_TRUE; // OpenGL 3.+
+  GLenum err = glewInit();
+  if (err != GLEW_OK) {
+    fprintf(stderr, "[ERROR] GLEW initialization failed\n");
+    SDL_GL_DeleteContext(context);
+    SDL_DestroyWindow(w->window);
+    SDL_Quit();
+    exit(EXIT_FAILURE);
+  }
+  w->context = context;
+}
+
+// initialize an OpenGL shader program
+void init_vao(win* w) {
+  // bind vao
+  glGenVertexArrays(1, &(w->prog.vao));
+  glBindVertexArray(w->prog.vao);
+}
+
 /* initialize a window with sdl and opengl context from its size */
 void init_win(win* w) {
   w->window = init_sdl(w->w, w->h);
