@@ -18,7 +18,6 @@
 
 // custom module
 #include "win.h"
-#include "texture.h"
 #include "msleep.h"
 
 // initializations //-----------------------------------------------------------
@@ -31,17 +30,6 @@ win init_win(int h, int w) {
   printf("initalizing context...\n");
   init_context(&window);
 
-  // TEMPORARY WAY TO LOAD DEFAULT SHADER
-  printf("loading shader...\n");
-  window.prog = load_new_program(
-    "default",
-    "../shaders/default.vert", // vert path
-    "../shaders/default.frag", // frag path
-    0, 0, h, w
-  );
-
-  printf("initalizing shader...\n");
-  init_vao(&window);
   return window;
 }
 
